@@ -133,3 +133,64 @@ CREATE TABLE AsignacionEspecialidad (
     FechaAsignacion DATE,
     FOREIGN KEY (PostulacionEspecialidadID) REFERENCES PostulacionEspecialidad(ID)
 );
+
+-- Creación de la regla de negocio: Validación de la calificación media nacional del título médico
+CREATE OR REPLACE TRIGGER TRG_ValidarCalificacionMediaNacional
+BEFORE INSERT ON TituloMedico
+FOR EACH ROW
+BEGIN
+    IF (NEW.CalificacionMediaNacional < 4.0 OR NEW.CalificacionMediaNacional > 7.0) THEN
+        raise_application_error(-20001, 'Error: La calificación media nacional del título médico debe estar entre 4.0 y 7.0.');
+    END IF;
+END;
+/
+
+-- Creación de la regla de negocio: Validación de la fecha de aprobación del examen de medicina
+CREATE OR REPLACE TRIGGER TRG_ValidarFechaAprobacionExamen
+BEFORE INSERT ON ExamenMedicina
+FOR EACH ROW
+BEGIN
+    IF (NEW.FechaAprobacion > SYSDATE) THEN
+        raise_application_error(-20001, 'Error: La fecha de aprobación del examen de medicina no puede ser posterior a la fecha actual.');
+    END IF;
+END;
+/
+
+-- Creación de la regla de negocio: Validación de las fechas de inicio y fin de la experiencia laboral
+CREATE OR REPLACE TRIGGER TRG_ValidarFechasExperienciaLaboral
+BEFORE INSERT ON ExperienciaLaboral
+FOR EACH ROW
+BEGIN
+    IF (NEW.FechaInicio > NEW.FechaFin) THEN
+        raise_application_error(-20001, 'Error: La fecha de inicio de la experiencia laboral no puede ser posterior a la fecha de fin.');
+    END IF;
+END;
+/
+
+-- Creación de la función: Obtener edad a partir de la fecha de nacimiento
+CREATE OR REPLACE FUNCTION ObtenerEdad(FechaNacimiento IN DATE) RETURN NUMBER IS
+    Edad NUMBER;
+BEGIN
+    Edad := TRUNC(MONTHS_BETWEEN(SYSDATE, FechaNacimiento) / 12);
+    RETURN Edad;
+END;
+/
+
+-- Creación del procedimiento: Obtener postulantes mayores de edad
+CREATE OR REPLACE PROCEDURE ObtenerPostulantesMayoresEdad AS
+    CURSOR c_postulantes IS
+        SELECT *
+        FROM Postulante
+        WHERE ObtenerEdad(FechaNacimiento) >= 18;
+    v_postulante Postulante%ROWTYPE;
+BEGIN
+    OPEN c_postulantes;
+    LOOP
+        FETCH c_postulantes INTO v_postulante;
+        EXIT WHEN c_postulantes%NOTFOUND;
+        -- Realizar alguna acción con el postulante mayor de edad
+        DBMS_OUTPUT.PUT_LINE('ID: ' || v_postulante.ID || ', Nombre: ' || v_postulante.Nombre || ', Apellido: ' || v_postulante.Apellido);
+    END LOOP;
+    CLOSE c_postulantes;
+END;
+/
