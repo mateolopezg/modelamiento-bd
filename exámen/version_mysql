@@ -1,0 +1,130 @@
+// VERSION MYSQL
+
+CREATE TABLE Fabricante (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  nombre VARCHAR(100) NOT NULL,
+  ano_produccion DATE NOT NULL
+);
+
+CREATE TABLE Motor (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  fabricante_id INT NOT NULL,
+  ano_produccion DATE NOT NULL,
+  FOREIGN KEY (fabricante_id) REFERENCES Fabricante(id)
+);
+
+CREATE TABLE Chasis (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  fabricante_id INT NOT NULL,
+  ano_produccion DATE NOT NULL,
+  FOREIGN KEY (fabricante_id) REFERENCES Fabricante(id)
+);
+
+CREATE TABLE Ruedas (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  fabricante_id INT NOT NULL,
+  ano_produccion DATE NOT NULL,
+  FOREIGN KEY (fabricante_id) REFERENCES Fabricante(id)
+);
+
+CREATE TABLE Automovil (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  motor_id INT NOT NULL,
+  chasis_id int not null,
+  ruedas_id int not null,
+  marca VARCHAR(100) NOT NULL,
+  patente VARCHAR(10) NOT NULL,
+  ano DATE NOT NULL,
+  INDEX idx (id),
+  FOREIGN KEY (motor_id) REFERENCES Motor(id),
+  FOREIGN KEY (chasis_id) REFERENCES Chasis(id),
+  FOREIGN KEY (ruedas_id) REFERENCES Ruedas(id)
+);
+
+CREATE TABLE Socio (
+  id int not null PRIMARY KEY AUTO_INCREMENT,
+  rut VARCHAR(14),
+  nombre VARCHAR(100) NOT NULL,
+  domicilio VARCHAR(200) NOT NULL,
+  INDEX idx_rut (rut)
+);
+
+CREATE TABLE Reserva (
+  id int not null PRIMARY KEY AUTO_INCREMENT,
+  socio_rut VARCHAR(14),
+  fecha_reserva DATE,
+  FOREIGN KEY (socio_rut) REFERENCES Socio(rut)
+);
+
+CREATE TABLE Aval (
+  id int not null PRIMARY KEY AUTO_INCREMENT,
+  socio_rut VARCHAR(14),
+  aval_rut VARCHAR(14),
+  FOREIGN KEY (socio_rut) REFERENCES Socio(rut),
+  FOREIGN KEY (aval_rut) REFERENCES Socio(rut)
+);
+
+CREATE TABLE Arriendo (
+  id int not null PRIMARY KEY AUTO_INCREMENT,
+  socio_rut VARCHAR(14),
+  automovil_id INT not null,
+  fecha_inicio DATE NOT NULL,
+  fecha_final DATE NOT NULL,
+  FOREIGN KEY (socio_rut) REFERENCES Socio(rut),
+  FOREIGN KEY (automovil_id) REFERENCES Automovil(id)
+);
+
+
+
+
+CREATE TRIGGER validar_formato_rut_socio
+BEFORE INSERT ON Socio
+FOR EACH ROW
+BEGIN
+  IF NEW.rut NOT REGEXP '^[0-9]{1,8}-[0-9Kk]$' THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'El formato del "rut" en la tabla Socio debe ser: 19999999-9';
+  END IF;
+END;
+
+
+
+CREATE TRIGGER validar_formato_rut_reserva
+BEFORE INSERT ON Reserva
+FOR EACH ROW
+BEGIN
+  IF NEW.socio_rut NOT REGEXP '^[0-9]{1,8}-[0-9Kk]$' THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'El formato del "rut" en la tabla Reserva debe ser: 19999999-9';
+  END IF;
+END;
+//
+
+CREATE TRIGGER validar_formato_rut_aval
+BEFORE INSERT ON Aval
+FOR EACH ROW
+BEGIN
+  IF NEW.socio_rut NOT REGEXP '^[0-9]{1,8}-[0-9Kk]$' THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'El formato del "rut" en la tabla Aval debe ser: 19999999-9';
+  END IF;
+
+  IF NEW.aval_rut NOT REGEXP '^[0-9]{1,8}-[0-9Kk]$' THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'El formato del "rut" en la tabla Aval debe ser: 19999999-9';
+  END IF;
+END;
+//
+
+CREATE TRIGGER validar_formato_rut_arriendo
+BEFORE INSERT ON Arriendo
+FOR EACH ROW
+BEGIN
+  IF NEW.socio_rut NOT REGEXP '^[0-9]{1,8}-[0-9Kk]$' THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'El formato del "rut" en la tabla Arriendo debe ser: 19999999-9';
+  END IF;
+END;
+//
+
+
